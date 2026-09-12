@@ -1,6 +1,7 @@
 pandas
 pydantic
-groq
 python_dotenv
 jupyter
 datasets
+tqdm
+openai
