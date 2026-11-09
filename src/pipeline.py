@@ -34,7 +34,7 @@ class TicketPipeline:
 
         for attempt in range(self.max_retries + 1):
             try:
-                raw_response = self.engine.generate(SYSTEM_PROMPT, prompt)
+                raw_response = self.engine.generate(prompt=prompt, system_prompt=SYSTEM_PROMPT)
                 cleaned = self._clean_json_response(raw_response)
                 data = json.loads(cleaned)
                 return ProcessedTicket.model_validate(data)
