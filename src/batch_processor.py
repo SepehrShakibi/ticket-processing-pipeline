@@ -62,7 +62,7 @@ class BatchProcessor:
                 record["suggested_action"] = self._extract_field(
                     result, "suggested_action", "action", "summary"
                 )
-                record["is_safe"] = getattr(result, "is_safe", True)
+                record["processing_success"] = True
                 record["processing_error"] = None
 
             except Exception as e:
@@ -72,7 +72,7 @@ class BatchProcessor:
                 record["predicted_priority"] = None
                 record["predicted_sentiment"] = None
                 record["suggested_action"] = None
-                record["is_safe"] = False
+                record["processing_success"] = False
                 record["processing_error"] = str(e)
 
             processed_records.append(record)
