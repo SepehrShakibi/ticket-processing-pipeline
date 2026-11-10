@@ -32,21 +32,51 @@ class BatchProcessor:
         text_column: str = "instruction",
         checkpoint_every: int = 50,
     ) -> pd.DataFrame:
+        if text_column not in df.columns:
+            raise ValueError(
+                f"Input DataFrame is missing text column: {text_column!r}"
+            )
+
+        if (
+            isinstance(checkpoint_every, bool)
+            or not isinstance(checkpoint_every, int)
+            or checkpoint_every <= 0
+        ):
+            raise ValueError("checkpoint_every must be a positive integer.")
+
         processed_records = []
         checkpoint_dir = "data/checkpoints"
         os.makedirs(checkpoint_dir, exist_ok=True)
 
         print(f"Starting batch processing for {len(df)} samples...")
 
-        for idx, row in tqdm(df.iterrows(), total=len(df), desc="Processing Tickets"):
-            ticket_text = str(row[text_column])
+        rows = tqdm(
+            df.iterrows(),
+            total=len(df),
+            desc="Processing Tickets",
+        )
+
+        for processed_count, (_, row) in enumerate(rows, start=1):
             record = row.to_dict()
 
             try:
-                # Execute pipeline built in Phase 3
+                # Validate input before calling the pipeline.
+                ticket_text = row[text_column]
+
+                if not isinstance(ticket_text, str):
+                    raise ValueError(
+                        f"{text_column!r} must contain a non-empty string."
+                    )
+
+                ticket_text = ticket_text.strip()
+
+                if not ticket_text:
+                    raise ValueError(
+                        f"{text_column!r} must not be empty or whitespace."
+                    )
+
                 result = self.pipeline.process(ticket_text)
 
-                # Safely extract predictions, supporting both ProcessedTicket fields and legacy naming
                 record["predicted_category"] = self._extract_field(
                     result, "category", "predicted_category"
                 )
@@ -66,7 +96,6 @@ class BatchProcessor:
                 record["processing_error"] = None
 
             except Exception as e:
-                # Catch unexpected failures without interrupting the entire batch
                 record["predicted_category"] = None
                 record["predicted_intent"] = None
                 record["predicted_priority"] = None
@@ -78,13 +107,15 @@ class BatchProcessor:
             processed_records.append(record)
             time.sleep(self.delay)
 
-            # Checkpointing to disk
-            if (idx + 1) % checkpoint_every == 0:
-                temp_df = pd.DataFrame(processed_records)
-                temp_df.to_csv(
-                    f"{checkpoint_dir}/checkpoint_step_{idx + 1}.csv",
+            # Count processed rows independently of DataFrame index labels.
+            if processed_count % checkpoint_every == 0:
+                checkpoint_path = os.path.join(
+                    checkpoint_dir,
+                    f"checkpoint_step_{processed_count}.csv",
+                )
+                pd.DataFrame(processed_records).to_csv(
+                    checkpoint_path,
                     index=False,
                 )
 
-        final_df = pd.DataFrame(processed_records)
-        return final_df
+        return pd.DataFrame(processed_records)

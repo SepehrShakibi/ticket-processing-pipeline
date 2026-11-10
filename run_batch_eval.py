@@ -13,12 +13,25 @@ def main():
     if not os.path.exists(dataset_path):
         raise FileNotFoundError(f"Please place dataset at: {dataset_path}")
 
-    full_df = pd.read_csv(dataset_path)
-    
-    # Select a representative sample for testing
-    sample_size = 50
-    test_df = full_df.sample(n=sample_size, random_state=42).reset_index(drop=True)
+    try:
+        full_df = pd.read_csv(dataset_path)
+    except pd.errors.EmptyDataError as exc:
+        raise ValueError(
+            f"Dataset file contains no CSV data: {dataset_path}"
+        ) 
+
+
+
+    # Use up to 50 available rows.
+    sample_size = min(50, len(full_df))
+
+    test_df = (
+        full_df.sample(n=sample_size, random_state=42)
+        .reset_index(drop=True)
+    )
+
     print(f"Loaded {len(test_df)} samples for batch run.")
+
 
     # Initialize components
     engine = get_llm_engine()
