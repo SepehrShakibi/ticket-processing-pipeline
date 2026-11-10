@@ -1,7 +1,8 @@
 pandas
-pydantic
+pydantic>=2,<3
 python_dotenv
 jupyter
 datasets
 tqdm
 openai
+scikit-learn
