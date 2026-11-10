@@ -60,7 +60,7 @@ def get_llm_engine() -> BaseLLMEngine:
     if provider == "openai":
         return OpenAIEngine(
             api_key=Config.OPENAI_API_KEY,
-            model_name=getattr(Config, "OPENAI_MODEL", "gpt-5.6-sol"),
+            model_name=getattr(Config, "OPENAI_MODEL_NAME", "gpt-5.6-sol"),
             base_url=getattr(Config, "OPENAI_BASE_URL", None)
         )
 
