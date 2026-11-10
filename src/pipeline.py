@@ -7,6 +7,12 @@ from src.prompt import SYSTEM_PROMPT, build_prompt
 
 class TicketPipeline:
     def __init__(self, llm_engine, max_retries: int = 2):
+        if (
+        isinstance(max_retries, bool)
+        or not isinstance(max_retries, int)
+        or max_retries < 0
+        ):
+            raise ValueError("max_retries must be a non-negative integer.")
         self.engine = llm_engine
         self.max_retries = max_retries
         self.logger = logging.getLogger(__name__)
@@ -28,8 +34,17 @@ class TicketPipeline:
 
     def process(self, ticket_text: str) -> ProcessedTicket:
         """
-        Processes a ticket text through the LLM and validates against ProcessedTicket schema.
+        Processes a ticket text through the LLM and validates
+        against ProcessedTicket schema.
         """
+        if not isinstance(ticket_text, str):
+            raise TypeError("ticket_text must be a string.")
+
+        ticket_text = ticket_text.strip()
+
+        if not ticket_text:
+            raise ValueError("ticket_text must not be empty.")
+
         prompt = build_prompt(ticket_text)
 
         for attempt in range(self.max_retries + 1):
