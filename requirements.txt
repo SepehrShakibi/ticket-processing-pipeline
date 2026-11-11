@@ -2,7 +2,8 @@ pandas
 pydantic>=2,<3
 python_dotenv
 jupyter
-datasets
 tqdm
 openai
 scikit-learn
+fastapi>=0.115,<1
+uvicorn[standard]>=0.30,<1

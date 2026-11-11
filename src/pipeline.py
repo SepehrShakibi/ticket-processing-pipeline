@@ -4,6 +4,9 @@ from pydantic import ValidationError
 from src.schemas import ProcessedTicket
 from src.prompt import SYSTEM_PROMPT, build_prompt
 
+class ModelOutputError(RuntimeError):
+    """Raised when model output remains invalid after all attempts."""
+
 
 class TicketPipeline:
     def __init__(self, llm_engine, max_retries: int = 2):
@@ -55,6 +58,6 @@ class TicketPipeline:
                 return ProcessedTicket.model_validate(data)
 
             except (json.JSONDecodeError, ValidationError) as e:
-                self.logger.warning(f"Attempt {attempt + 1}/{self.max_retries + 1} failed: {e}")
+                self.logger.warning("Model output validation failed on attempt %s/%s",attempt+1,self.max_retries + 1)
                 if attempt == self.max_retries:
-                    raise RuntimeError(f"Max retries reached ({self.max_retries}). Last error: {e}")
+                    raise ModelOutputError("Model output remained invalid after all attemps") from e

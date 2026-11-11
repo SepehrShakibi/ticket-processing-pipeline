@@ -26,10 +26,15 @@ class BaseLLMEngine(ABC):
 class OpenAIEngine(BaseLLMEngine):
     """LLM Engine implementaion for OpenAI / OpenAI-compatible APIs."""
 
-    def __init__(self, model_name: str, api_key: str, base_url: Optional[str] = None):
+    def __init__(self, model_name: str,
+                  api_key: str,
+                  base_url: Optional[str] = None,
+                  timeout: float = 30.0,
+                  max_retries: int = 0,
+                  ):
         self.model_name = model_name
 
-        self.client = OpenAI(api_key = api_key, base_url = base_url)
+        self.client = OpenAI(api_key = api_key, base_url = base_url, timeout = timeout, max_retries =  max_retries)
 
     def generate(self, prompt: str, 
                   system_prompt: Optional[str] = None, 
@@ -49,7 +54,10 @@ class OpenAIEngine(BaseLLMEngine):
         )
         return response.choices[0].message.content or ""
 
-
+    def close(self) -> None:
+        """Release the underlying HTTP client resources."""
+        self.client.close()
+        
 def get_llm_engine() -> BaseLLMEngine:
     """
     Factory function to instantiate the configured LLM engine.
